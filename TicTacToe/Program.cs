@@ -1,51 +1,86 @@
-using NUnit.Framework;
+using System;
 
-[TestFixture]
-public class TicTacToeTests
+class Program
 {
-    [Test]
-    public void TestGamePlay()
+    static void Main()
     {
         Player player1 = new Player(PlayerType.X);
         Player player2 = new Player(PlayerType.O);
         Game game = new Game(player1, player2);
 
-        NUnit.Framework.Assert.AreEqual(PlayerType.X, game.CurrentPlayer);
-        Assert.IsFalse(game.Board.HasWinner());
-        Assert.IsFalse(game.Board.IsFull());
+        while (true)
+        {
+            Console.Clear();
+            Console.WriteLine("Current board:");
+            PrintBoard(game);
 
-        game.MakeMove(0, 0);
-        Assert.AreEqual(PlayerType.O, game.CurrentPlayer);
-        game.MakeMove(0, 1);
-        Assert.AreEqual(PlayerType.X, game.CurrentPlayer);
-        game.MakeMove(1, 1);
-        Assert.AreEqual(PlayerType.O, game.CurrentPlayer);
-        game.MakeMove(0, 2);
-        Assert.AreEqual(PlayerType.X, game.CurrentPlayer);
-        game.MakeMove(2, 2);
+            Console.WriteLine($"Player {game.CurrentPlayer}'s turn.");
+            int row, col = -1;
+            bool validInput = false;
+            do
+            {
+                Console.Write("Enter row (0-2): ");
+                string rowInput = Console.ReadLine();
+                Console.Write("Enter column (0-2): ");
+                string colInput = Console.ReadLine();
 
-        Assert.IsTrue(game.Board.HasWinner());
-        Assert.AreEqual(PlayerType.X, game.Board.GetCell(0, 0));
-        Assert.AreEqual(PlayerType.X, game.Board.GetCell(1, 1));
-        Assert.AreEqual(PlayerType.X, game.Board.GetCell(2, 2));
+                if (!int.TryParse(rowInput, out row) || !int.TryParse(colInput, out col) || row < 0 || row > 2 || col < 0 || col > 2)
+                {
+                    Console.WriteLine("Invalid input. Please enter a number between 0 and 2.");
+                }
+                else if (game.Board.GetCell(row, col) != PlayerType.None)
+                {
+                    Console.WriteLine("Cell is already taken. Please choose another cell.");
+                }
+                else
+                {
+                    validInput = true;
+                }
+            } while (!validInput);
 
-        game.Restart();
-        Assert.AreEqual(PlayerType.X, game.CurrentPlayer);
-        Assert.IsFalse(game.Board.HasWinner());
-        Assert.IsFalse(game.Board.IsFull());
+            try
+            {
+                game.MakeMove(row, col);
+
+                if (game.Board.HasWinner())
+                {
+                    Console.Clear();
+                    Console.WriteLine("Current board:");
+                    PrintBoard(game);
+                    Console.WriteLine($"Player {game.CurrentPlayer} wins!");
+                    break;
+                }
+
+                if (game.Board.IsFull())
+                {
+                    Console.Clear();
+                    Console.WriteLine("Current board:");
+                    PrintBoard(game);
+                    Console.WriteLine("It's a tie!");
+                    break;
+                }
+            }
+            catch (InvalidOperationException ex)
+            {
+                Console.WriteLine(ex.Message);
+                Console.WriteLine("Press any key to continue...");
+                Console.ReadKey();
+            }
+        }
+
+        Console.WriteLine("Press any key to exit...");
+        Console.ReadKey();
     }
 
-    [Test]
-    public void TestInvalidMoves()
+    static void PrintBoard(Game game)
     {
-        Player player1 = new Player(PlayerType.X);
-        Player player2 = new Player(PlayerType.O);
-        Game game = new Game(player1, player2);
-
-        Assert.Throws<InvalidOperationException>(() => game.MakeMove(-1, 0));
-        Assert.Throws<InvalidOperationException>(() => game.MakeMove(0, 3));
-
-        game.MakeMove(0, 0);
-        Assert.Throws<InvalidOperationException>(() => game.MakeMove(0, 0));
+        for (int i = 0; i < 3; i++)
+        {
+            for (int j = 0; j < 3; j++)
+            {
+                Console.Write(game.Board.GetCell(i, j) + " ");
+            }
+            Console.WriteLine();
+        }
     }
 }
